@@ -193,8 +193,25 @@ extension MainViewController {
                 
             }
             
+            var entriesResponse: [ShareGlucoseData]?
             let decoder = JSONDecoder()
-            let entriesResponse = try? decoder.decode([ShareGlucoseData].self, from: data)
+            do {
+                entriesResponse = try decoder.decode([ShareGlucoseData].self, from: data)
+            } catch let DecodingError.dataCorrupted(context) {
+                print("Data corrupted: \(context)")
+            } catch let DecodingError.keyNotFound(key, context) {
+                print("Key '\(key)' not found: \(context.debugDescription)")
+                print("codingPath: \(context.codingPath)")
+            } catch let DecodingError.valueNotFound(value, context) {
+                print("Value '\(value)' not found: \(context.debugDescription)")
+                print("codingPath: \(context.codingPath)")
+            } catch let DecodingError.typeMismatch(type, context)  {
+                print("Type '\(type)' mismatch: \(context.debugDescription)")
+                print("codingPath: \(context.codingPath)")
+            } catch {
+                print("Error decoding JSON: \(error)")
+            }
+
             if var nsData = entriesResponse {
                 DispatchQueue.main.async {
                     // transform NS data to look like Dex data
@@ -313,13 +330,20 @@ extension MainViewController {
         }
         
         // loop through the data so we can reverse the order to oldest first for the graph
-        for i in 0..<data.count{
+        for i in 0..<data.count {
             let dateString = data[data.count - 1 - i].date
             if dateString >= dateTimeUtils.getTimeIntervalNHoursAgo(N: graphHours) {
-                let reading = ShareGlucoseData(sgv: data[data.count - 1 - i].sgv, date: dateString, direction: data[data.count - 1 - i].direction)
+                let sgvValue = data[data.count - 1 - i].sgv
+                
+                // Skip the current iteration if the sgv value is over 600
+                // First time a user starts a G7, they get a value of 4000
+                if sgvValue > 600 {
+                    continue
+                }
+                
+                let reading = ShareGlucoseData(sgv: sgvValue, date: dateString, direction: data[data.count - 1 - i].direction)
                 bgData.append(reading)
             }
-            
         }
 
         viewUpdateNSBG(sourceName: sourceName)
@@ -514,6 +538,7 @@ extension MainViewController {
                 if let uploader = lastDeviceStatus?["uploader"] as? [String:AnyObject] {
                     let upbat = uploader["battery"] as! Double
                     tableData[4].value = String(format:"%.0f", upbat) + "%"
+                    UserDefaultsRepository.deviceBatteryLevel.value = upbat
                 }
             }
         }
@@ -556,8 +581,12 @@ extension MainViewController {
                             var i = 0
                             while i <= toLoad {
                                 if i < prediction.count {
-                                    let prediction = ShareGlucoseData(sgv: Int(round(prediction[i])), date: predictionTime, direction: "flat")
-                                    predictionData.append(prediction)
+                                    let sgvValue = Int(round(prediction[i]))
+                                    // Skip values higher than 600
+                                    if sgvValue <= 600 {
+                                        let prediction = ShareGlucoseData(sgv: sgvValue, date: predictionTime, direction: "flat")
+                                        predictionData.append(prediction)
+                                    }
                                     predictionTime += 300
                                 }
                                 i += 1
@@ -1301,7 +1330,7 @@ extension MainViewController {
                 priorDateFormatter.timeZone = TimeZone(abbreviation: "UTC")
                 guard let priorDateString = dateFormatter.date(from: priorStrippedZone) else { continue }
                 let priorDateTimeStamp = priorDateString.timeIntervalSince1970
-                let priorDuration = priorEntry?["duration"] as! Double
+                let priorDuration = priorEntry?["duration"] as? Double ?? 0.0
                 // if difference between time stamps is greater than the duration of the last entry, there is a gap. Give a 15 second leeway on the timestamp
                 if Double( dateTimeStamp - priorDateTimeStamp ) > Double( (priorDuration * 60) + 15 ) {
                     
