@@ -70,7 +70,9 @@ class MainViewController: UIViewController, UITableViewDataSource, ChartViewDele
     let consoleLogging = true
     var timeofLastBGUpdate = 0 as TimeInterval
     var nsVerifiedAlerted = false
-    
+    var currentSage : sageData?
+    var currentCage : cageData?
+
     var backgroundTask = BackgroundTask()
     
     // Refresh NS Data
@@ -91,7 +93,6 @@ class MainViewController: UIViewController, UITableViewDataSource, ChartViewDele
     var calTimer = Timer()
     
     var bgTimer = Timer()
-    var cageSageTimer = Timer()
     var profileTimer = Timer()
     var deviceStatusTimer = Timer()
     var treatmentsTimer = Timer()
@@ -163,7 +164,8 @@ class MainViewController: UIViewController, UITableViewDataSource, ChartViewDele
         UserDefaultsRepository.infoNames.value.append("Rec. Bolus")
         UserDefaultsRepository.infoNames.value.append("Pred.")
         UserDefaultsRepository.infoNames.value.append("Carbs today")
-
+        UserDefaultsRepository.infoNames.value.append("Autosens")
+        
         // Reset deprecated settings
         UserDefaultsRepository.debugLog.value = false;
         UserDefaultsRepository.alwaysDownloadAllBG.value = true;
@@ -172,7 +174,7 @@ class MainViewController: UIViewController, UITableViewDataSource, ChartViewDele
         //infoTable.layer.borderColor = UIColor.darkGray.cgColor
         //infoTable.layer.borderWidth = 1.0
         //infoTable.layer.cornerRadius = 6
-        infoTable.rowHeight = 24
+        infoTable.rowHeight = 21
         infoTable.dataSource = self
         infoTable.tableFooterView = UIView(frame: .zero) // get rid of extra rows
         infoTable.bounces = false
@@ -256,6 +258,12 @@ class MainViewController: UIViewController, UITableViewDataSource, ChartViewDele
         refreshScrollView.alwaysBounceVertical = true
         
         refreshScrollView.delegate = self
+        
+        NotificationCenter.default.addObserver(self, selector: #selector(refresh), name: NSNotification.Name("refresh"), object: nil)
+    }
+    
+    deinit {
+        NotificationCenter.default.removeObserver(self, name: NSNotification.Name("refresh"), object: nil)
     }
     
     // Clean all timers and start new ones when refreshing
@@ -264,6 +272,8 @@ class MainViewController: UIViewController, UITableViewDataSource, ChartViewDele
         MinAgoText.text = "Refreshing"
         invalidateTimers()
         restartAllTimers()
+        currentCage = nil
+        currentSage = nil
         refreshControl.endRefreshing()
     }
     
@@ -345,10 +355,16 @@ class MainViewController: UIViewController, UITableViewDataSource, ChartViewDele
     }
     
     private func createDerivedData() {
+        let currentCount = UserDefaultsRepository.infoSort.value.count
+        if currentCount < self.tableData.count {
+            for i in currentCount..<self.tableData.count {
+                UserDefaultsRepository.infoSort.value.append(i)
+            }
+        }
         
         self.derivedTableData = []
         while UserDefaultsRepository.infoVisible.value.count < self.tableData.count {
-            UserDefaultsRepository.infoVisible.value.append(true)
+            UserDefaultsRepository.infoVisible.value.append(false)
         }
         for i in 0..<self.tableData.count {
             if(UserDefaultsRepository.infoVisible.value[UserDefaultsRepository.infoSort.value[i]]) {
