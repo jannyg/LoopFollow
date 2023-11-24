@@ -16,7 +16,7 @@ jobs:
     steps:
       # Clean up certificates and provisioning profiles
       - name: Nuke certificated and provisioning profiles
-        run: fastlane match_nuke
+        run: fastlane match nuke
         env:
           TEAMID: ${{ secrets.TEAMID }}
           GH_PAT: ${{ secrets.GH_PAT }}
