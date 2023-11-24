@@ -1,0 +1,26 @@
+name: XXX - Match nuke
+run-name: Match nuke (${{ github.ref_name }})
+on:
+  workflow_dispatch:
+
+jobs:
+  validate:
+    name: Validate
+    uses: ./.github/workflows/validate_secrets.yml
+    secrets: inherit
+
+  certificates:
+    name: Match Nuke
+    needs: validate
+    runs-on: macos-12
+    steps:
+      # Clean up certificates and provisioning profiles
+      - name: Nuke certificated and provisioning profiles
+        run: fastlane match_nuke
+        env:
+          TEAMID: ${{ secrets.TEAMID }}
+          GH_PAT: ${{ secrets.GH_PAT }}
+          MATCH_PASSWORD: ${{ secrets.MATCH_PASSWORD }}
+          FASTLANE_KEY_ID: ${{ secrets.FASTLANE_KEY_ID }}
+          FASTLANE_ISSUER_ID: ${{ secrets.FASTLANE_ISSUER_ID }}
+          FASTLANE_KEY: ${{ secrets.FASTLANE_KEY }}
