@@ -31,9 +31,10 @@ class UserDefaultsRepository {
         "Rec. Bolus",
         "Pred.",
         "Carbs today",
-        "Autosens"])
-    static let infoSort = UserDefaultsValue<[Int]>(key: "infoSort", default: [0,1,2,3,4,5,6,7,8,9,10,11])
-    static let infoVisible = UserDefaultsValue<[Bool]>(key: "infoVisible", default: [true,true,true,true,true,true,true,true,true,true,true,false])
+        "Autosens",
+        "Profile"])
+    static let infoSort = UserDefaultsValue<[Int]>(key: "infoSort", default: [0,1,2,3,4,5,6,7,8,9,10,11,12])
+    static let infoVisible = UserDefaultsValue<[Bool]>(key: "infoVisible", default: [true,true,true,true,true,true,true,true,true,true,true,false,false])
     static let hideInfoTable = UserDefaultsValue<Bool>(key: "hideInfoTable", default: false)
     
     // Nightscout Settings
@@ -75,6 +76,15 @@ class UserDefaultsRepository {
     static let useIFCC = UserDefaultsValue<Bool>(key: "useIFCC", default: false)
     static let showSmallGraph = UserDefaultsValue<Bool>(key: "showSmallGraph", default: true)
     static let speakBG = UserDefaultsValue<Bool>(key: "speakBG", default: false)
+    static let speakBGAlways = UserDefaultsValue<Bool>(key: "speakBGAlways", default: true)
+    static let speakLowBG = UserDefaultsValue<Bool>(key: "speakLowBG", default: false)
+    static let speakProactiveLowBG = UserDefaultsValue<Bool>(key: "speakProactiveLowBG", default: false)
+    static let speakFastDropDelta = UserDefaultsValue<Float>(key: "speakFastDropDelta", default: 10.0)
+    static let speakLowBGLimit = UserDefaultsValue<Float>(key: "speakLowBGLimit", default: 72.0)
+    static let speakHighBGLimit = UserDefaultsValue<Float>(key: "speakHighBGLimit", default: 180.0)
+    static let speakHighBG = UserDefaultsValue<Bool>(key: "speakHighBG", default: false)
+    static let speakLanguage = UserDefaultsValue<String>(key: "speakLanguage", default: "en")
+    static let showDisplayName = UserDefaultsValue<Bool>(key: "showDisplayName", default: false)
     static let backgroundRefreshFrequency = UserDefaultsValue<Double>(key: "backgroundRefreshFrequency", default: 1)
     static let backgroundRefresh = UserDefaultsValue<Bool>(key: "backgroundRefresh", default: true)
     static let appBadge = UserDefaultsValue<Bool>(key: "appBadge", default: true)
@@ -110,7 +120,6 @@ class UserDefaultsRepository {
     static let writeCalendarEvent = UserDefaultsValue<Bool>(key: "writeCalendarEvent", default: false)
     static let watchLine1 = UserDefaultsValue<String>(key: "watchLine1", default: "%BG% %DIRECTION% %DELTA% %MINAGO%")
     static let watchLine2 = UserDefaultsValue<String>(key: "watchLine2", default: "C:%COB% I:%IOB% B:%BASAL%")
-    static let saveImage = UserDefaultsValue<Bool>(key: "saveImage", default: false)
     
     // Alarm Settings
     static let systemOutputVolume = UserDefaultsValue<Float>(key: "systemOutputVolume", default: 0.5)
